@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.5.0 <0.9.0;
+pragma solidity >=0.7.0 <0.9.0;
 
 /* Bingo game (british style)
 * Each card has 3 lines, each line containing 5 numbers
 *
 * Each line cannot repeat a number in the same tenths
-* E.g. 10 and 15 in the same line is not possible
+* E.g. 11 and 15 in the same line is not possible
 * 
 * Numbers are drawn and the first player(s) filling a line
 * win part of the prize
 *
-* The first player(s) filling two lines win another part
 * The first player(s) filling the whole card (full house)
 * win the remaining part of the prize
 *
@@ -20,6 +19,8 @@ pragma solidity >=0.5.0 <0.9.0;
 * Prizes:
 *   30% to first full line
 *   70% to full house
+* Notes: 
+* For convenience, numbers go from 0 to 89.
 */
 
 
@@ -98,7 +99,7 @@ contract Bingo {
   * @param  _number Number being called out
   * @return a player won the game?
   */
-  function callOutNumber (uint8 _number) internal onlyStarted returns (bool) {
+  function _callOutNumber (uint8 _number) internal onlyStarted returns (bool) {
     bool prizeOneLine = oneLineWinners.length > 0;
 
     // find matches in line. Find line winner
@@ -135,7 +136,7 @@ contract Bingo {
   * The number is generated pseudorandomly internally
   * British bingo has 90 balls
   */
-  function drawGameNumbers () public onlyStarted {
+  function _drawGameNumbers () internal onlyStarted {
 	updateSeed(abi.encode(seed));
     uint8[90] memory draws;
 
@@ -157,12 +158,16 @@ contract Bingo {
 		emit DrawNumber(draws[i]);
 
         // call out number in position i;
-        bool win = callOutNumber(draws[i]);
+        bool win = _callOutNumber(draws[i]);
         if (win) break;
     }
   }
 
-  function drawCardNumbers () private onlyFinished {
+  /* Draws (pseudo-)random numbers to fill a card
+  *  It needs to be 5 per line, cannot be repeated and
+  * each line cannot have more than one number in the same decade
+  */
+  function _drawCardNumbers () private onlyFinished {
     uint8[5][3] memory card;
     uint8[90] memory draws;
     uint8 slotsFilled;
@@ -217,9 +222,6 @@ contract Bingo {
   }
 
   /* Generate a card for msg.sender
-  *
-  * @param  <param> <description>
-  * @return <description> 
   */
   function generateCard () public payable onlyFinished {
     require(counter[msg.sender] == 0, "Address already subscribed for next play");
@@ -232,7 +234,7 @@ contract Bingo {
     // mix the seed with player's address
     updateSeed(abi.encode(seed,msg.sender));
 
-    drawCardNumbers();
+    _drawCardNumbers();
 
     players.push(msg.sender);
   }
@@ -250,7 +252,7 @@ contract Bingo {
     payable(msg.sender).transfer(prize);
   } 
 
-  function resetCards() internal onlyFinished {
+  function _resetCards() internal onlyFinished {
      for (uint8 i = 0; i < 90; i++) {
         delete lines[0][i];
         delete lines[1][i];
@@ -258,7 +260,7 @@ contract Bingo {
      }  
   }
 
-  function resetCounters() internal onlyFinished {
+  function _resetCounters() internal onlyFinished {
       for (uint8 i = 0; i < players.length; i++) {
         address p = players[i];
         counter[p] = 0;
@@ -268,12 +270,15 @@ contract Bingo {
       }
   }
 
-  function resetWinners() internal onlyFinished {
+  function _resetWinners() internal onlyFinished {
       delete oneLineWinners;
       delete fullHouseWinners;
   }
 
-  function distributePrizes() internal onlyFinished {
+  /* Distributes the prizes to the winners of last game
+  */
+  function _distributePrizes() internal onlyFinished {
+    require (players.length > 0, "No players to distribute prizes");
     uint totalPrize = players.length*cardPrice;
 	// 30% goes to One Line Winners
     uint oneLinePrize = totalPrize*3/10/oneLineWinners.length;
@@ -291,31 +296,35 @@ contract Bingo {
 
   /* A reset after the game is finished
   */
-  function reset() internal onlyFinished {
-      resetCards();
-      resetCounters();
-      resetWinners();
+  function _reset() internal onlyFinished {
+      _resetCards();
+      _resetCounters();
+      _resetWinners();
       // no need to keep players anymore
       delete players;
   }
 
+  /* Distributes the prizes and resets the game
+  */
   function endGame() public onlyStarted {
     state = State.finished;
 
-    distributePrizes();
+    _distributePrizes();
 
-    reset();
+    _reset();
   }
 
+  /* Checks if game can start and draws numbers
+  */
   function startGame() public onlyFinished {
     require (players.length > 0, "No players subscribed");
     require ((block.number > timeLastCard + timeOut) || (players.length == maxCards), "Game cannot start yet");
     
-	state = State.started;
+    state = State.started;
 
     // draw numbers until there is a winner
-	if (fullHouseWinners.length == 0)
-    	drawGameNumbers();
+    if (fullHouseWinners.length == 0)
+        _drawGameNumbers();
   }
 
   /* NOT USED: Force reset during a gameplay
@@ -331,7 +340,7 @@ contract Bingo {
     state = State.finished;
 
     // it's ok to do the soft reset now
-    reset();
+    _reset();
   }
   
 }

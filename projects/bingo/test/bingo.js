@@ -13,6 +13,7 @@ const Bingo = artifacts.require("Bingo");
 
 // Time out found in contract. Could be read from contract instead
 const timeOut = 100;
+const cardPrice = web3.utils.toWei('0.1', 'ether');
 
 contract("bingo", function (accounts) {
   it("should assert true", async function () {
@@ -44,7 +45,7 @@ contract("bingo", function (accounts) {
     const bingo = await Bingo.deployed();
 
     var acc = accounts[0]
-    result = await bingo.generateCard({value: web3.utils.toWei('0.1', 'ether')});
+    result = await bingo.generateCard({value: cardPrice});
     // SeedChanged event
     //console.log(result.logs[0].args.seed);
     // CardGenerated event
@@ -75,7 +76,7 @@ contract("bingo", function (accounts) {
     const bingo = await Bingo.deployed();
 
     try {
-        await bingo.generateCard({value: web3.utils.toWei('0.1', 'ether')})
+        await bingo.generateCard({value: cardPrice})
     } catch (error) {
         assert(error.reason == "Address already subscribed for next play");
     }
@@ -133,7 +134,7 @@ contract("bingo", function (accounts) {
 	// Total prize should equal invested amount
     var acc = accounts[0]
 	var prize = (await bingo.prizes(acc)).toString();
-	assert.equal(prize, web3.utils.toWei('0.1', 'ether'));
+	assert.equal(prize, cardPrice);
 	assert.equal(await web3.eth.getBalance(bingo.address), prize);
   });
   
@@ -147,6 +148,8 @@ contract("bingo", function (accounts) {
   	var txCost = result.gasUsed * result.effectiveGasPrice; 
     var postBalance = (await web3.eth.getBalance(acc))
 	assert(postBalance, prevBalance - txCost + web3.utils.toWei('0.1', 'ether'));
+	var prize = (await bingo.prizes(acc));
+	assert.equal(prize, web3.utils.toWei('0', 'ether'));
   });
   
 

@@ -3,7 +3,9 @@
 ## Introduction
 
 This project replicates the British version of the Bingo game.
+
 A card costs 0.1 $ETH.
+
 The first to make a line wins 30% of the pot and the first to make the full card wins the remaining 70% of the pot.
 
 ## Game play
@@ -12,7 +14,7 @@ The first to make a line wins 30% of the pot and the first to make the full card
 
 Any user can buy a card, which contains 3 lines, each line with 5 numbers. Only one number can exist per decade per line.
 
-The user calls function `generateCard` and supply 0.1 $ETH to it (the price of the ticket).
+The user calls function `generateCard()` and supply 0.1 $ETH to it (the price of the ticket).
 
 The start of the game is delayed 100 blocks every time a user buys a card, to give other users the opportunity to buy cards.
 
