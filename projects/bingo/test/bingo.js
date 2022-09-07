@@ -2,12 +2,12 @@ const Bingo = artifacts.require("Bingo");
 
 
 /*
-*	Real testing would have to be done with randomized accounts and 
-*	more players in the game. Also, it would have to validate if the winners
-*	match the sequence of called out numbers
+*    Real testing would have to be done with randomized accounts and 
+*    more players in the game. Also, it would have to validate if the winners
+*    match the sequence of called out numbers
 *
-*	For now, this kind of validates that the contract is generating cards,
-*	calling out numbers, selecting winners and distributing prizes.
+*    For now, this kind of validates that the contract is generating cards,
+*    calling out numbers, selecting winners and distributing prizes.
 */
 
 
@@ -40,7 +40,7 @@ contract("bingo", function (accounts) {
         assert(error.reason == "No players subscribed");
     }
   })
-	
+    
   it("should generate a card", async function () {
     const bingo = await Bingo.deployed();
 
@@ -67,10 +67,10 @@ contract("bingo", function (accounts) {
     var add = await bingo.players(0);
     assert.equal(add, acc);
   
-	var blockNumber = (await web3.eth.getBlock('latest')).number;
+    var blockNumber = (await web3.eth.getBlock('latest')).number;
     console.log("Registered at block height: " + blockNumber);
-	assert.equal((await bingo.timeLastCard()).toNumber(), blockNumber); 
- })
+    assert.equal((await bingo.timeLastCard()).toNumber(), blockNumber); 
+  })
 
   it("Same player cannot generate another card", async () => {
     const bingo = await Bingo.deployed();
@@ -95,67 +95,67 @@ contract("bingo", function (accounts) {
   it("Game starts and finishes successfully", async () => {
     const bingo = await Bingo.deployed();
 
-	for (var i = 0; i < timeOut; i++) {	
-    	await advanceBlock();
-	}
+    for (var i = 0; i < timeOut; i++) {    
+        await advanceBlock();
+    }
     console.log("Starting at block height: " + (await web3.eth.getBlock('latest')).number);
     await bingo.startGame()
 
     var acc = accounts[0]
-	var oneLineWinners = (await bingo.getOneLineWinners());
-	assert.equal(oneLineWinners.length, 1);
-	assert.equal(oneLineWinners[0], acc);
-	var fullHouseWinners = (await bingo.getFullHouseWinners());
-	assert.equal(fullHouseWinners.length, 1);
-	assert.equal(fullHouseWinners[0], acc);
+    var oneLineWinners = (await bingo.getOneLineWinners());
+    assert.equal(oneLineWinners.length, 1);
+    assert.equal(oneLineWinners[0], acc);
+    var fullHouseWinners = (await bingo.getFullHouseWinners());
+    assert.equal(fullHouseWinners.length, 1);
+    assert.equal(fullHouseWinners[0], acc);
   })
 
   it("Cannot collect prizes until game is ended", async () => {
     const bingo = await Bingo.deployed();
 
-	try {
-		await bingo.collectPrize();
-	} catch (error) {
-		assert.equal(error.reason, 'Game ongoing');
-	}
+    try {
+        await bingo.collectPrize();
+    } catch (error) {
+        assert.equal(error.reason, 'Game ongoing');
+    }
   });
   
   it("End game to distribute prizes and reset the game", async () => {
     const bingo = await Bingo.deployed();
     
-	await bingo.endGame()
-	
-	var oneLineWinners = (await bingo.getOneLineWinners());
-	assert.equal(oneLineWinners.length, 0);
-	var fullHouseWinners = (await bingo.getFullHouseWinners());
-	assert.equal(fullHouseWinners.length, 0);
+    await bingo.endGame()
+    
+    var oneLineWinners = (await bingo.getOneLineWinners());
+    assert.equal(oneLineWinners.length, 0);
+    var fullHouseWinners = (await bingo.getFullHouseWinners());
+    assert.equal(fullHouseWinners.length, 0);
     var numberOfPlayers = await bingo.getNumberOfPlayers();
-	assert.equal(numberOfPlayers, 0);
-	// Total prize should equal invested amount
+    assert.equal(numberOfPlayers, 0);
+    // Total prize should equal invested amount
     var acc = accounts[0]
-	var prize = (await bingo.prizes(acc)).toString();
-	assert.equal(prize, cardPrice);
-	assert.equal(await web3.eth.getBalance(bingo.address), prize);
+    var prize = (await bingo.prizes(acc)).toString();
+    assert.equal(prize, cardPrice);
+    assert.equal(await web3.eth.getBalance(bingo.address), prize);
   });
   
   it("Prize is collected correctly", async () => {
     const bingo = await Bingo.deployed();
 
-	var acc = accounts[0]
+    var acc = accounts[0]
     var prevBalance = (await web3.eth.getBalance(acc))
-	
-	var result = await bingo.collectPrize();
-  	var txCost = result.gasUsed * result.effectiveGasPrice; 
+    
+    var result = await bingo.collectPrize();
+    var txCost = result.gasUsed * result.effectiveGasPrice; 
     var postBalance = (await web3.eth.getBalance(acc))
-	assert(postBalance, prevBalance - txCost + web3.utils.toWei('0.1', 'ether'));
-	var prize = (await bingo.prizes(acc));
-	assert.equal(prize, web3.utils.toWei('0', 'ether'));
+    assert(postBalance, prevBalance - txCost + web3.utils.toWei('0.1', 'ether'));
+    var prize = (await bingo.prizes(acc));
+    assert.equal(prize, web3.utils.toWei('0', 'ether'));
   });
   
 
   // Mine a block to increase height
   advanceBlock = () => {
-  	return new Promise((resolve, reject) => {
+      return new Promise((resolve, reject) => {
     web3.currentProvider.send({
       jsonrpc: '2.0',
       method: 'evm_mine',
