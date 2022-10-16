@@ -2,7 +2,7 @@
 
 ## Projects
 
-This folder includes sample projects, including solidity contracts and truffle tests.
+This folder includes sample projects, including solidity contracts and corresponding tests.
 
 List of projects:
 * [Bingo: A bingo game.](projects/bingo/)

@@ -69,3 +69,9 @@ A user can end one of his pools, withdrawing all tokens in it.
 
 Functions:
 - `endPool`
+
+## Test
+
+To run the test (requires hardhat), just run
+
+`npx hardhat test`
