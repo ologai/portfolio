@@ -12,16 +12,32 @@ contract Factory {
         admin = msg.sender;
     }
 
+    /*
+    *   Initialize pool with two tokens
+    *
+    *   @param      _owner   Owner of pools
+    *   @returns    list of pools
+    */
     function getPools(address _owner) public view returns (Pool[] memory){
         return pools[_owner];
     }
 
+    /*
+    *   Creates an empty pool and adds to owner's list
+    *
+    *   @returns    instance of new pool
+    */
     function createPool() public returns (Pool) {
         Pool newPool = new Pool(msg.sender);
         pools[msg.sender].push(newPool);
         return newPool;
     }
 
+    /*
+    *   Destroys a pool
+    *
+    *   @param idx      Index of pool to be destroyed
+    */
     function destroyPool(uint idx) public {
         Pool myPool = pools[msg.sender][idx];
         uint poolsLength = pools[msg.sender].length;

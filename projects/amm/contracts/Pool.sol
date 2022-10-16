@@ -15,13 +15,13 @@ library MyMath {
 
     error BaseOutOfBounds();
 
-	function ntoi(uint _n) internal pure returns (uint) {
-		return _n/ONE;
-	}
+    function ntoi(uint _n) internal pure returns (uint) {
+        return _n/ONE;
+    }
 
-	function floor(uint _n) internal pure returns (uint) {
-		return ntoi(_n)*ONE;
-	}
+    function floor(uint _n) internal pure returns (uint) {
+        return ntoi(_n)*ONE;
+    }
 
     function subSign(uint a, uint b)
         internal pure
@@ -35,18 +35,19 @@ library MyMath {
     }
 
     /*
-		x ^ y = x ^ (n.f) = x ^ (n + 0.f) = x ^ n * x ^ 0.f
+    x ^ y = x ^ (n.f) = x ^ (n + 0.f) = x ^ n * x ^ 0.f
     */
-	function pow (uint _x, uint _y) internal pure returns (uint) {
-		uint n = ntoi(_y);
-		uint f;
-		uint res;
+    function pow (uint _x, uint _y) internal pure returns (uint) {
+        if (_x > 2*ONE) revert BaseOutOfBounds();
+        uint n = ntoi(_y);
+        uint f;
+        uint res;
 
-		if (n > 0)
-			res = powi(_x, n);
-		else
+        if (n > 0)
+            res = powi(_x, n);
+        else
             res = ONE;
-		f = _y - n*ONE;
+        f = _y - n*ONE;
 
         if (f > 0)
             res = res*powf(_x, f)/ONE;
@@ -55,7 +56,7 @@ library MyMath {
     }
 
     // DSMath.rpow
-	function powi (uint _x, uint _n) internal pure returns (uint) {
+    function powi (uint _x, uint _n) internal pure returns (uint) {
         uint z = _n % 2 != 0 ? _x : ONE;
 
         for (_n /= 2; _n != 0; _n /= 2) {
@@ -111,11 +112,11 @@ library MyMath {
 using MyMath for uint;
 
 /*
- Improvements to contract:
- - There could be a receipt token for composability.
- - Swaps could have a max slippage (or min amount received/max amount paid) argument
- - Could get away with using balance in token instead of storing in the contract
- */
+Improvements to contract:
+- There could be a receipt token for composability.
+- Swaps could have a max slippage (or min amount received/max amount paid) argument
+- Could get away with using balance in token instead of storing in the contract
+*/
 
 contract Pool {
 
@@ -202,6 +203,7 @@ contract Pool {
     * wI = tkin.weight               \      \ ( bI + ( aI * ( 1 - sF )) /              /
     * wO = tkOut.weight
     * sF = swapFee
+    *
     *   @param tkIn the input token
     *   @param tkOut the output token
     *   @param inAmount amount of tkIn
@@ -241,7 +243,15 @@ contract Pool {
         return              _tkIn.balance * foo / denom;
 
     }
-
+    /*  Swap one token by another
+    *   You can either specify the input amount or the output amount
+    *   The missing amount will be calculated
+    *
+    *   @param tkIn the input token
+    *   @param tkOut the output token
+    *   @param inAmount amount of tkIn
+    *   @param fee fee in percentage
+    */
     function swap(address _addIn, address _addOut, uint _inAmount, uint _outAmount) public {
         // it's a reference to update the values
         StPool storage tkIn = tokens[_addIn];
@@ -256,13 +266,15 @@ contract Pool {
         tkIn.balance += _inAmount;
         tkOut.balance -= _outAmount;
 
-
         // transfer tokens
         IERC20(_addIn).transferFrom(msg.sender, address(this), _inAmount);
         IERC20(_addOut).transfer(msg.sender, _outAmount);
     }
 
     /*
+    *   Add a token or increase balance of existing token
+    *   Weights are adjusted to reflect new balances
+    *
     *   @param _tk          token to be added
     *   @param _amount      amount to be added
     *   @param _tkRef       reference token to get price
@@ -320,6 +332,13 @@ contract Pool {
         IERC20(_tk).transferFrom(msg.sender, address(this), _amount);
     }
 
+    /*
+    *   Remove supply or entire token from the pool
+    *   Weights are calculated to reflect new balances
+    *
+    *   @param _tk the token to remove supply
+    *   @param _amount the amount to be removed
+    */
     function withdrawToken(address _tk, uint _amount) public onlyAdmin {
         /*
         *   OLD state
@@ -368,6 +387,9 @@ contract Pool {
         IERC20(_tk).transfer(admin, _amount);
     }
 
+    /*
+    *   End pool, withdrawing all tokens
+    */
     function endPool() public onlyFactory {
         for (uint i = 0; i < tokenList.length; i++) {
             address tk = tokenList[i];
@@ -375,6 +397,14 @@ contract Pool {
         }
     }
 
+    /*
+    *   Initialize pool with two tokens
+    *
+    *   @param _tk1     address of token 1
+    *   @param _tk2     address of token 2
+    *   @param _tk1Info balance and weight of token 1
+    *   @param _tk2Info balance and weight of token 2
+    */
     function startPool (address _tk1, address _tk2, StPool memory _tk1Info, StPool memory _tk2Info) public onlyAdmin {
         if (tokenList.length > 0) revert InvalidPool();
 
