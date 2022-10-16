@@ -251,7 +251,7 @@ contract Bingo {
       uint prize = prizes[msg.sender];
       require (prize > 0, "Nothing to collect");
 
-      prizes[msg.sender] = 0;
+      delete prizes[msg.sender];
 
       // calling send function and at the end
       // avoids reentrancy attacks
