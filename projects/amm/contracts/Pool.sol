@@ -1,8 +1,7 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/utils/math/Math.sol';
 
 // Uncomment this line to use console.log
 //import "hardhat/console.sol";
@@ -14,8 +13,7 @@ library MyMath {
     uint constant ONE = 10**18;
     uint constant PRECISION = 10**7;
 
-    error ExpOutOfBounds();
-
+    error BaseOutOfBounds();
 
 	function ntoi(uint _n) internal pure returns (uint) {
 		return _n/ONE;
@@ -25,16 +23,16 @@ library MyMath {
 		return ntoi(_n)*ONE;
 	}
 
-  function subSign(uint a, uint b)
-      internal pure
-      returns (uint, bool)
-  {
-      if (a >= b) {
-          return (a - b, false);
-      } else {
-          return (b - a, true);
-      }
-  }
+    function subSign(uint a, uint b)
+        internal pure
+        returns (uint, bool)
+    {
+        if (a >= b) {
+            return (a - b, false);
+        } else {
+            return (b - a, true);
+        }
+    }
 
     /*
 		x ^ y = x ^ (n.f) = x ^ (n + 0.f) = x ^ n * x ^ 0.f
@@ -44,18 +42,17 @@ library MyMath {
 		uint f;
 		uint res;
 
-		if (n > 0) {
+		if (n > 0)
 			res = powi(_x, n);
-		} else {
-      res = ONE;
-		}
+		else
+            res = ONE;
 		f = _y - n*ONE;
 
-    if (f > 0) {
-        res = res*powf(_x, f)/ONE;
+        if (f > 0)
+            res = res*powf(_x, f)/ONE;
+
+        return res;
     }
-    return res;
-	}
 
     // DSMath.rpow
 	function powi (uint _x, uint _n) internal pure returns (uint) {
@@ -71,49 +68,46 @@ library MyMath {
         return z;
     }
 
-  // From Balancer code
-  // based on Taylor series of (1+x)^a
-  // did some Gas optimizations
-  function powf(uint base, uint exp)
-          internal pure
-          returns (uint)
-      {
-          // term 0:
-          uint a     = exp;
-          (uint x, bool xneg)  = subSign(base, ONE);
-          uint term = ONE;
-          uint sum   = term;
-          bool negative = false;
-          uint bigK;
+    // From Balancer code
+    // based on Taylor series of (1+x)^a
+    // did some Gas optimizations
+    function powf(uint base, uint exp)
+        internal pure
+        returns (uint)
+    {
+        // term 0:
+        uint a     = exp;
+        (uint x, bool xneg)  = subSign(base, ONE);
+        uint term = ONE;
+        uint sum   = term;
+        bool negative = false;
+        uint bigK;
 
 
-          // term(k) = numer / denom
-          //         = (product(a - i - 1, i=1-->k) * x^k) / (k!)
-          // each iteration, multiply previous term by (a-(k-1)) * x / k
-          // continue until term is less than precision
-          for (uint i = 1; term >= PRECISION; i++) {
-              (uint c, bool cneg) = subSign(a, bigK);
-              bigK += ONE;
-              term = term * c / ONE * x / bigK;
-              if (term == 0) break;
+        // term(k) = numer / denom
+        //         = (product(a - i - 1, i=1-->k) * x^k) / (k!)
+        // each iteration, multiply previous term by (a-(k-1)) * x / k
+        // continue until term is less than precision
+        for (uint i = 1; term >= PRECISION; i++) {
+            (uint c, bool cneg) = subSign(a, bigK);
+            bigK += ONE;
+            term = term * c / ONE * x / bigK;
+            if (term == 0) break;
 
 
-              if (xneg) negative = !negative;
-              if (cneg) negative = !negative;
-              if (negative) {
-                  sum = sum - term;
-              } else {
-                  sum = sum + term;
-              }
-          }
+            if (xneg) negative = !negative;
+            if (cneg) negative = !negative;
+            if (negative) {
+                sum = sum - term;
+            } else {
+                sum = sum + term;
+            }
+        }
 
-          return sum;
-      }
-
-
+        return sum;
+    }
 }
 
-using Math for uint;
 using MyMath for uint;
 
 /*
@@ -130,8 +124,6 @@ contract Pool {
     error InvalidPool();
     error InvalidFee(uint fee);
     error InvalidToken(address token);
-
-    event WeightAdjusted(uint oldWeight, uint newWeight);
 
     uint constant ONE = 10**18;
 
@@ -241,12 +233,12 @@ contract Pool {
     *   @param fee fee in percentage
     */
     function getInAmount(StPool memory _tkIn, StPool memory _tkOut, uint _outAmount, uint _fee) public pure returns (uint) {
-        uint weightRatio = ONE * _tkOut.weight / _tkIn.weight;
-        uint diff = _tkOut.balance - _outAmount;
-        uint y = ONE * _tkOut.balance / diff;
-        uint foo = y.pow(weightRatio) - ONE;
-        uint denom = ONE - _fee;
-        return _tkIn.balance * foo / denom;
+        uint weightRatio    = ONE * _tkOut.weight / _tkIn.weight;
+        uint diff           = _tkOut.balance - _outAmount;
+        uint y              = ONE * _tkOut.balance / diff;
+        uint foo            = y.pow(weightRatio) - ONE;
+        uint denom          = ONE - _fee;
+        return              _tkIn.balance * foo / denom;
 
     }
 

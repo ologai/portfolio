@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
 import "./Pool.sol";
@@ -25,10 +25,10 @@ contract Factory {
     function destroyPool(uint idx) public {
         Pool myPool = pools[msg.sender][idx];
         uint poolsLength = pools[msg.sender].length;
-        
+
         // end pool
         myPool.endPool();
-        
+
         // remove pool from array
         pools[msg.sender][idx] = pools[msg.sender][poolsLength - 1];
         pools[msg.sender].pop();

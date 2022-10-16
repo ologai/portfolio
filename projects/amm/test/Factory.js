@@ -52,42 +52,42 @@ describe('Factory', function () {
   describe('Create pools', function () {
     describe('Validations', function () {
 
-        it('Two pools have been created', async function () {
-          const { owner, factory } = await loadFixture(startup);
+      it('Two pools have been created', async function () {
+        const { owner, factory } = await loadFixture(startup);
 
-          // returns transaction info
-          await factory.createPool();
-          await factory.createPool();
+        // returns transaction info
+        await factory.createPool();
+        await factory.createPool();
 
-          const pools = await factory.getPools(owner.address);
+        const pools = await factory.getPools(owner.address);
 
-          expect(pools.length).to.equal(2);
-          expect(pools[0]).to.not.equal(pools[1]);
-        });
-
-        it('Two pools have been destroyed', async function () {
-          const { owner, factory } = await loadFixture(startup);
-
-          // returns transaction info
-          await factory.createPool();
-          await factory.createPool();
-
-          const poolsBefore = await factory.getPools(owner.address);
-
-          await factory.destroyPool(0);
-
-          var poolsAfter = await factory.getPools(owner.address);
-
-          expect(poolsAfter.length).to.equal(1);
-          expect(poolsAfter[0]).to.equal(poolsBefore[1]);
-
-          await factory.destroyPool(0);
-
-          poolsAfter = await factory.getPools(owner.address);
-
-          expect(poolsAfter.length).to.equal(0);
-        });
-
+        expect(pools.length).to.equal(2);
+        expect(pools[0]).to.not.equal(pools[1]);
       });
+
+      it('Two pools have been destroyed', async function () {
+        const { owner, factory } = await loadFixture(startup);
+
+        // returns transaction info
+        await factory.createPool();
+        await factory.createPool();
+
+        const poolsBefore = await factory.getPools(owner.address);
+
+        await factory.destroyPool(0);
+
+        var poolsAfter = await factory.getPools(owner.address);
+
+        expect(poolsAfter.length).to.equal(1);
+        expect(poolsAfter[0]).to.equal(poolsBefore[1]);
+
+        await factory.destroyPool(0);
+
+        poolsAfter = await factory.getPools(owner.address);
+
+        expect(poolsAfter.length).to.equal(0);
+      });
+
+    });
   });
 });
