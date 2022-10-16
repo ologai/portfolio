@@ -6,4 +6,5 @@ This folder includes sample projects, including solidity contracts and truffle t
 
 List of projects:
 * [Bingo: A bingo game.](projects/bingo/)
+* [Custom Automated Market Maker](projects/amm/)
 
